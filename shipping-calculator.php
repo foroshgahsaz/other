@@ -1,9 +1,10 @@
 <?php
 /**
  * ماشین‌حساب ارسال رایگان
- * (تمامی مقادیر به ریال محاسبه می‌شوند)
- * نرخ سهم حمل: 0.012272727 (~1.227%)
- * ملاک ارسال رایگان: فقط کرایه نیسان (همه بارهای رایگان با نیسان ارسال می‌شوند)
+ * - مبلغ خرید: ریال (کاربر وارد می‌کند)
+ * - کرایه دیتابیس: تومان (nissan_price)
+ * - نرخ سهم حمل: 0.012272727 (~1.227%) روی مبلغ تومانی
+ * - ملاک ارسال رایگان: فقط کرایه نیسان
  */
 
 require_once( dirname(__FILE__) . '/wp-load.php' );
@@ -11,6 +12,8 @@ require_once( dirname(__FILE__) . '/wp-load.php' );
 global $wpdb;
 
 define( 'SHIPPING_RATE', 0.012272727 );
+define( 'RIAL_PER_TOMAN', 10 );
+define( 'MIN_PURCHASE_RIAL', 1100000000 ); // 110 میلیون تومان
 
 // دریافت لیست شهرها
 $cities = $wpdb->get_results(
@@ -45,29 +48,30 @@ if ( isset($_POST['action']) && $_POST['action'] === 'calculate' ) {
         exit;
     }
     
-    $fare = floatval($row->nissan_price);
-    $shipping_share = $amount * SHIPPING_RATE;
+    $fare_toman = floatval($row->nissan_price);
+    $amount_toman = $amount / RIAL_PER_TOMAN;
+    $shipping_share_toman = $amount_toman * SHIPPING_RATE;
     
-    if ($amount < 1100000000) {
+    if ($amount < MIN_PURCHASE_RIAL) {
         $is_free = false;
-        $needed_purchase = 0;
-        $diff = 0;
+        $needed_purchase_toman = 0;
+        $diff_toman = 0;
     } else {
-        $is_free = $shipping_share >= $fare;
-        $needed_purchase = $is_free ? 0 : ceil($fare / SHIPPING_RATE);
-        $diff = $is_free ? 0 : ($needed_purchase - $amount);
+        $is_free = $shipping_share_toman >= $fare_toman;
+        $needed_purchase_toman = $is_free ? 0 : ceil($fare_toman / SHIPPING_RATE);
+        $diff_toman = $is_free ? 0 : ($needed_purchase_toman - $amount_toman);
     }
     
     $result = [
         'nissan' => [
             'label'              => 'نیسان',
-            'fare'               => $fare,
-            'shipping_share'     => $shipping_share,
+            'fare'               => $fare_toman * RIAL_PER_TOMAN,
+            'shipping_share'     => $shipping_share_toman * RIAL_PER_TOMAN,
             'is_free'            => $is_free,
-            'needed_purchase'    => $needed_purchase,
-            'diff'               => $diff,
+            'needed_purchase'    => $needed_purchase_toman * RIAL_PER_TOMAN,
+            'diff'               => $diff_toman * RIAL_PER_TOMAN,
             'amount'             => $amount,
-            'is_below_threshold' => $amount < 1100000000
+            'is_below_threshold' => $amount < MIN_PURCHASE_RIAL
         ]
     ];
     
@@ -818,7 +822,7 @@ function renderResults(data, city, cityElementId, gridElementId) {
     
     if (v.is_below_threshold) {
       statusClass = 'info';
-      statusText = 'ℹ️ زیر ۱,۱۰۰,۰۰۰,۰۰۰ ریال';
+      statusText = 'ℹ️ زیر ۱,۱۰۰,۰۰۰,۰۰۰ ریال (۱۱۰ میلیون تومان)';
     } else if (v.is_free) {
       statusClass = 'free';
       statusText = '✅ ارسال رایگان!';
