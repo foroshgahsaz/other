@@ -2,9 +2,8 @@
 /**
  * ماشین‌حساب ارسال رایگان
  * - مبلغ خرید: ریال (کاربر وارد می‌کند)
- * - کرایه دیتابیس: تومان (nissan_price)
+ * - کرایه دیتابیس: تومان (peykan_price, mazda_price, nissan_price)
  * - نرخ سهم حمل: 0.012272727 (~1.227%) روی مبلغ تومانی
- * - ملاک ارسال رایگان: فقط کرایه نیسان
  */
 
 require_once( dirname(__FILE__) . '/wp-load.php' );
@@ -14,6 +13,26 @@ global $wpdb;
 define( 'SHIPPING_RATE', 0.012272727 );
 define( 'RIAL_PER_TOMAN', 10 );
 define( 'MIN_PURCHASE_RIAL', 1100000000 ); // 110 میلیون تومان
+
+function calc_vehicle_result( $fare_toman, $amount, $amount_toman, $shipping_share_toman ) {
+    if ( $amount < MIN_PURCHASE_RIAL ) {
+        return [
+            'is_free'         => false,
+            'needed_toman'    => 0,
+            'diff_toman'      => 0,
+            'below_threshold' => true,
+        ];
+    }
+
+    $is_free = $shipping_share_toman >= $fare_toman;
+
+    return [
+        'is_free'         => $is_free,
+        'needed_toman'    => $is_free ? 0 : ceil( $fare_toman / SHIPPING_RATE ),
+        'diff_toman'      => $is_free ? 0 : ( ceil( $fare_toman / SHIPPING_RATE ) - $amount_toman ),
+        'below_threshold' => false,
+    ];
+}
 
 // دریافت لیست شهرها
 $cities = $wpdb->get_results(
@@ -36,7 +55,7 @@ if ( isset($_POST['action']) && $_POST['action'] === 'calculate' ) {
     }
     
     $row = $wpdb->get_row( $wpdb->prepare(
-        "SELECT nissan_price 
+        "SELECT peykan_price, mazda_price, nissan_price 
          FROM mm_woo_excel_shipping_routes 
          WHERE destination_city = %s 
          LIMIT 1",
@@ -48,32 +67,30 @@ if ( isset($_POST['action']) && $_POST['action'] === 'calculate' ) {
         exit;
     }
     
-    $fare_toman = floatval($row->nissan_price);
     $amount_toman = $amount / RIAL_PER_TOMAN;
     $shipping_share_toman = $amount_toman * SHIPPING_RATE;
+    $result = [];
     
-    if ($amount < MIN_PURCHASE_RIAL) {
-        $is_free = false;
-        $needed_purchase_toman = 0;
-        $diff_toman = 0;
-    } else {
-        $is_free = $shipping_share_toman >= $fare_toman;
-        $needed_purchase_toman = $is_free ? 0 : ceil($fare_toman / SHIPPING_RATE);
-        $diff_toman = $is_free ? 0 : ($needed_purchase_toman - $amount_toman);
-    }
-    
-    $result = [
-        'nissan' => [
-            'label'              => 'نیسان',
-            'fare'               => $fare_toman * RIAL_PER_TOMAN,
-            'shipping_share'     => $shipping_share_toman * RIAL_PER_TOMAN,
-            'is_free'            => $is_free,
-            'needed_purchase'    => $needed_purchase_toman * RIAL_PER_TOMAN,
-            'diff'               => $diff_toman * RIAL_PER_TOMAN,
-            'amount'             => $amount,
-            'is_below_threshold' => $amount < MIN_PURCHASE_RIAL
-        ]
+    $vehicles = [
+        'peykan' => ['label' => 'وانت', 'fare_toman' => floatval($row->peykan_price)],
+        'mazda'  => ['label' => 'مزدا',  'fare_toman' => floatval($row->mazda_price)],
+        'nissan' => ['label' => 'نیسان', 'fare_toman' => floatval($row->nissan_price)],
     ];
+    
+    foreach ( $vehicles as $key => $v ) {
+        $calc = calc_vehicle_result( $v['fare_toman'], $amount, $amount_toman, $shipping_share_toman );
+        
+        $result[$key] = [
+            'label'              => $v['label'],
+            'fare'               => $v['fare_toman'] * RIAL_PER_TOMAN,
+            'shipping_share'     => $shipping_share_toman * RIAL_PER_TOMAN,
+            'is_free'            => $calc['is_free'],
+            'needed_purchase'    => $calc['needed_toman'] * RIAL_PER_TOMAN,
+            'diff'               => $calc['diff_toman'] * RIAL_PER_TOMAN,
+            'amount'             => $amount,
+            'is_below_threshold' => $calc['below_threshold'],
+        ];
+    }
     
     echo json_encode(['success' => true, 'data' => $result, 'city' => $city]);
     exit;
@@ -352,10 +369,8 @@ if ( isset($_POST['action']) && $_POST['action'] === 'calculate' ) {
 
   .vehicles-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 14px;
-    max-width: 420px;
-    margin: 0 auto;
   }
 
   .vehicle-card {
@@ -537,7 +552,7 @@ if ( isset($_POST['action']) && $_POST['action'] === 'calculate' ) {
     <div class="header">
       <span class="badge">🚚 ماشین‌حساب حمل‌ونقل</span>
       <h1>محاسبه ارسال رایگان</h1>
-      <p>مبلغ خرید (ریال) و شهر را وارد کنید — ملاک ارسال رایگان: کرایه نیسان</p>
+      <p>مبلغ خرید (ریال) و شهر را وارد کنید</p>
     </div>
 
     <div class="form-card">
@@ -591,7 +606,7 @@ if ( isset($_POST['action']) && $_POST['action'] === 'calculate' ) {
   <div class="header">
     <span class="badge">🚚 ماشین‌حساب</span>
     <h1>محاسبه ارسال رایگان</h1>
-    <p>مبلغ (ریال) و شهر — ملاک: کرایه نیسان</p>
+    <p>مبلغ (ریال) و شهر را وارد کنید</p>
   </div>
 
   <div class="form-card">
@@ -809,6 +824,8 @@ function renderResults(data, city, cityElementId, gridElementId) {
   grid.innerHTML = '';
 
   const icons = { 
+    peykan: '<i class="fas fa-truck-pickup"></i>',
+    mazda: '<i class="fas fa-truck"></i>',
     nissan: '<i class="fas fa-truck-moving"></i>'
   };
 
@@ -838,7 +855,7 @@ function renderResults(data, city, cityElementId, gridElementId) {
     card.innerHTML = `
       <div class="v-icon">${icons[key]}</div>
       <div class="v-name">${v.label}</div>
-      <div class="stat"><span class="lbl">کرایه نیسان</span><span class="val">${fmt(v.fare)}</span></div>
+      <div class="stat"><span class="lbl">کرایه</span><span class="val">${fmt(v.fare)}</span></div>
       <span class="status-pill ${statusClass}">${statusText}</span>
       ${additionalContent}
     `;
