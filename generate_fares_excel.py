@@ -6,14 +6,6 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, Border, Side, PatternFill
 from openpyxl.utils import get_column_letter
 
-# Persian digits for display (matching original document style)
-PERSIAN_DIGITS = str.maketrans("0123456789", "۰۱۲۳۴۵۶۷۸۹")
-
-
-def to_persian_num(n):
-    return str(n).translate(PERSIAN_DIGITS)
-
-
 def add_section(ws, row, section_label):
     ws.merge_cells(start_row=row, start_column=1, end_row=row, end_column=5)
     cell = ws.cell(row=row, column=1, value=f"({section_label})")
@@ -24,7 +16,7 @@ def add_section(ws, row, section_label):
 
 
 def add_header(ws, row):
-    headers = ["ردیف", "مقصد", "پیکان", "مزدا ۱۶۰۰", "نیسان"]
+    headers = ["ردیف", "مقصد", "پیکان", "مزدا 1600", "نیسان"]
     for col, header in enumerate(headers, 1):
         cell = ws.cell(row=row, column=col, value=header)
         cell.font = Font(bold=True, size=11)
@@ -37,7 +29,7 @@ def add_rows(ws, row, data, start_index=1):
     thin = Side(style="thin")
     border = Border(left=thin, right=thin, top=thin, bottom=thin)
     for i, (destination, paykan, mazda, nissan) in enumerate(data, start_index):
-        values = [i, destination, to_persian_num(paykan), to_persian_num(mazda), to_persian_num(nissan)]
+        values = [i, destination, paykan, mazda, nissan]
         for col, val in enumerate(values, 1):
             cell = ws.cell(row=row, column=col, value=val)
             cell.alignment = Alignment(horizontal="center" if col != 2 else "right", vertical="center")
@@ -462,13 +454,13 @@ def build_workbook():
 
     ws_urban.merge_cells("A1:E1")
     title = ws_urban["A1"]
-    title.value = "«نرخ پیشنهادی ۱» تاکسی بار شهرستان لنگرود در سال ۱۴۰۴"
+    title.value = "«نرخ پیشنهادی 1» تاکسی بار شهرستان لنگرود در سال 1404"
     title.font = Font(bold=True, size=13)
     title.alignment = Alignment(horizontal="center", vertical="center")
 
     row = 3
     row = add_header(ws_urban, row)
-    urban_headers = ["ردیف", "نوع بار", "پیکان", "مزدا ۱۶۰۰", "نیسان"]
+    urban_headers = ["ردیف", "نوع بار", "پیکان", "مزدا 1600", "نیسان"]
     for col, h in enumerate(urban_headers, 1):
         ws_urban.cell(row=2, column=col, value=h).font = Font(bold=True, size=11)
         ws_urban.cell(row=2, column=col).alignment = Alignment(horizontal="center")
@@ -477,7 +469,7 @@ def build_workbook():
     thin = Side(style="thin")
     border = Border(left=thin, right=thin, top=thin, bottom=thin)
     for i, (cargo_type, paykan, mazda, nissan) in enumerate(URBAN_RATES, 1):
-        values = [i, cargo_type, to_persian_num(paykan), to_persian_num(mazda), to_persian_num(nissan)]
+        values = [i, cargo_type, paykan, mazda, nissan]
         for col, val in enumerate(values, 1):
             cell = ws_urban.cell(row=row, column=col, value=val)
             cell.alignment = Alignment(horizontal="center" if col != 2 else "right", vertical="center")
@@ -496,7 +488,7 @@ def build_workbook():
     ws_all.sheet_view.rightToLeft = True
 
     ws_all.merge_cells("A1:E1")
-    ws_all["A1"].value = "نرخ کرایه تاکسی بار لنگرود به مقاصد مختلف - سال ۱۴۰۴"
+    ws_all["A1"].value = "نرخ کرایه تاکسی بار لنگرود به مقاصد مختلف - سال 1404"
     ws_all["A1"].font = Font(bold=True, size=13)
     ws_all["A1"].alignment = Alignment(horizontal="center", vertical="center")
 
@@ -526,7 +518,7 @@ def build_workbook():
         ws["A1"].alignment = Alignment(horizontal="center")
 
         row = 3
-        headers = ["مقصد", "پیکان", "مزدا ۱۶۰۰", "نیسان"]
+        headers = ["مقصد", "پیکان", "مزدا 1600", "نیسان"]
         for col, h in enumerate(headers, 1):
             c = ws.cell(row=row, column=col, value=h)
             c.font = Font(bold=True)
@@ -535,7 +527,7 @@ def build_workbook():
         row += 1
 
         for destination, paykan, mazda, nissan in SECTIONS[section]:
-            values = [destination, to_persian_num(paykan), to_persian_num(mazda), to_persian_num(nissan)]
+            values = [destination, paykan, mazda, nissan]
             for col, val in enumerate(values, 1):
                 cell = ws.cell(row=row, column=col, value=val)
                 cell.alignment = Alignment(horizontal="center" if col > 1 else "right", vertical="center")
