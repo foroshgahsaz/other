@@ -38,13 +38,6 @@ def add_rows(ws, row, data, start_index=1):
     return row
 
 
-# ── نرخ شهری (صفحه اول) ──────────────────────────────────────────
-URBAN_RATES = [
-    ("حمل بار شهری", 250000, 350000, 500000),
-    ("حمل اثاثیه منزل و وزن بیش از حد قانونی", 400000, 600000, 800000),
-]
-
-# ── تمام جداول بین‌شهری ──────────────────────────────────────────
 SECTIONS = {
     "الف": [
         ("آستارا", 370000, 430000, 480000),
@@ -446,96 +439,28 @@ SECTION_ORDER = [
 
 def build_workbook():
     wb = Workbook()
+    ws = wb.active
+    ws.title = "کرایه بین‌شهری"
+    ws.sheet_view.rightToLeft = True
 
-    # ── Sheet 1: نرخ شهری ────────────────────────────────────────
-    ws_urban = wb.active
-    ws_urban.title = "نرخ شهری"
-    ws_urban.sheet_view.rightToLeft = True
-
-    ws_urban.merge_cells("A1:E1")
-    title = ws_urban["A1"]
-    title.value = "«نرخ پیشنهادی 1» تاکسی بار شهرستان لنگرود در سال 1404"
-    title.font = Font(bold=True, size=13)
-    title.alignment = Alignment(horizontal="center", vertical="center")
-
-    row = 3
-    row = add_header(ws_urban, row)
-    urban_headers = ["ردیف", "نوع بار", "پیکان", "مزدا 1600", "نیسان"]
-    for col, h in enumerate(urban_headers, 1):
-        ws_urban.cell(row=2, column=col, value=h).font = Font(bold=True, size=11)
-        ws_urban.cell(row=2, column=col).alignment = Alignment(horizontal="center")
-        ws_urban.cell(row=2, column=col).fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
-
-    thin = Side(style="thin")
-    border = Border(left=thin, right=thin, top=thin, bottom=thin)
-    for i, (cargo_type, paykan, mazda, nissan) in enumerate(URBAN_RATES, 1):
-        values = [i, cargo_type, paykan, mazda, nissan]
-        for col, val in enumerate(values, 1):
-            cell = ws_urban.cell(row=row, column=col, value=val)
-            cell.alignment = Alignment(horizontal="center" if col != 2 else "right", vertical="center")
-            cell.border = border
-        row += 1
-
-    ws_urban.cell(row=row + 1, column=1, value="جریمه حمل بار به عهده صاحب بار می باشد.")
-    ws_urban.merge_cells(start_row=row + 1, start_column=1, end_row=row + 1, end_column=5)
-    ws_urban.cell(row=row + 1, column=1).alignment = Alignment(horizontal="center")
-
-    for col, width in enumerate([6, 45, 14, 14, 14], 1):
-        ws_urban.column_dimensions[get_column_letter(col)].width = width
-
-    # ── Sheet 2: کرایه بین‌شهری (همه در یک شیت) ────────────────
-    ws_all = wb.create_sheet("کرایه بین‌شهری")
-    ws_all.sheet_view.rightToLeft = True
-
-    ws_all.merge_cells("A1:E1")
-    ws_all["A1"].value = "نرخ کرایه تاکسی بار لنگرود به مقاصد مختلف - سال 1404"
-    ws_all["A1"].font = Font(bold=True, size=13)
-    ws_all["A1"].alignment = Alignment(horizontal="center", vertical="center")
+    ws.merge_cells("A1:E1")
+    ws["A1"].value = "نرخ کرایه تاکسی بار لنگرود به مقاصد مختلف - سال 1404"
+    ws["A1"].font = Font(bold=True, size=13)
+    ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
 
     row = 3
     global_index = 1
     for section in SECTION_ORDER:
         if section not in SECTIONS:
             continue
-        row = add_section(ws_all, row, section)
-        row = add_header(ws_all, row)
-        row = add_rows(ws_all, row, SECTIONS[section], global_index)
+        row = add_section(ws, row, section)
+        row = add_header(ws, row)
+        row = add_rows(ws, row, SECTIONS[section], global_index)
         global_index += len(SECTIONS[section])
-        row += 1  # blank row between sections
-
-    for col, width in enumerate([6, 40, 14, 14, 14], 1):
-        ws_all.column_dimensions[get_column_letter(col)].width = width
-
-    # ── Sheets per section (matching original document layout) ───
-    for section in SECTION_ORDER:
-        if section not in SECTIONS:
-            continue
-        ws = wb.create_sheet(f"({section})")
-        ws.sheet_view.rightToLeft = True
-        ws.merge_cells("A1:D1")
-        ws["A1"].value = f"({section})"
-        ws["A1"].font = Font(bold=True, size=12)
-        ws["A1"].alignment = Alignment(horizontal="center")
-
-        row = 3
-        headers = ["مقصد", "پیکان", "مزدا 1600", "نیسان"]
-        for col, h in enumerate(headers, 1):
-            c = ws.cell(row=row, column=col, value=h)
-            c.font = Font(bold=True)
-            c.alignment = Alignment(horizontal="center")
-            c.fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
         row += 1
 
-        for destination, paykan, mazda, nissan in SECTIONS[section]:
-            values = [destination, paykan, mazda, nissan]
-            for col, val in enumerate(values, 1):
-                cell = ws.cell(row=row, column=col, value=val)
-                cell.alignment = Alignment(horizontal="center" if col > 1 else "right", vertical="center")
-                cell.border = border
-            row += 1
-
-        for col, width in enumerate([40, 14, 14, 14], 1):
-            ws.column_dimensions[get_column_letter(col)].width = width
+    for col, width in enumerate([6, 40, 14, 14, 14], 1):
+        ws.column_dimensions[get_column_letter(col)].width = width
 
     return wb
 
@@ -546,6 +471,5 @@ if __name__ == "__main__":
     wb.save(output)
     total = sum(len(v) for v in SECTIONS.values())
     print(f"Saved: {output}")
-    print(f"Urban rates: {len(URBAN_RATES)}")
     print(f"Inter-city destinations: {total}")
     print(f"Sections: {len(SECTIONS)}")
