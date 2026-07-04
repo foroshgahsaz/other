@@ -1,0 +1,26 @@
+{
+  "@context": "https://schema.org",
+  "@type": "ProfessionalService",
+  "name": "فروشگاه‌ساز",
+  "alternateName": "foroshgahsaz",
+  "url": "https://foroshgahsaz.ir",
+  "logo": "https://foroshgahsaz.ir/images/logo.png",
+  "description": "طراحی و ساخت فروشگاه اینترنتی حرفه‌ای. فروشگاه ساز آنلاین با درگاه پرداخت، پنل مدیریت و سئو.",
+  "telephone": "+98-9XX-XXX-XXXX",
+  "email": "info@foroshgahsaz.ir",
+  "priceRange": "$$",
+  "areaServed": {
+    "@type": "Country",
+    "name": "Iran"
+  },
+  "serviceType": [
+    "فروشگاه ساز",
+    "طراحی فروشگاه اینترنتی",
+    "ساخت سایت فروشگاهی",
+    "راه‌اندازی فروشگاه آنلاین"
+  ],
+  "sameAs": [
+    "https://instagram.com/foroshgahsaz",
+    "https://t.me/foroshgahsaz"
+  ]
+}
