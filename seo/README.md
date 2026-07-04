@@ -11,17 +11,24 @@ seo/
 ├── technical/                ← robots.txt، Schema، چک‌لیست
 ├── pages/                    ← محتوای صفحات لندینگ
 │   └── solutions/            ← صفحات صنف‌محور
-├── blog/                     ← ۱۲ مقاله کامل سئو شده
+├── blog/                     ← ۱۲ مقاله کامل سئو شده (با Meta Tags)
+│   ├── publish-ready/        ← ⭐ فقط متن مقاله — کپی مستقیم در سایت
+│   └── PUBLISH-GUIDE.md      ← راهنمای انتشار
 ├── components/               ← CTA، فرم، المان‌های مشترک
 └── portfolio/                ← نمونه‌کارها
 ```
 
 ## نحوه استفاده
 
-1. هر فایل `.md` شامل **frontmatter** با Meta Tags است
-2. محتوای HTML/Markdown را در Blade یا CMS کپی کنید
-3. `{PHONE}` و `{WHATSAPP}` را با شماره واقعی جایگزین کنید
-4. لینک‌های داخلی را حفظ کنید
+### مقالات (کپی در سایت)
+1. برو به **`blog/publish-ready/`** — متن کامل هر مقاله بدون frontmatter
+2. Meta Tags (title, description) را از فایل اصلی `blog/*.md` بردار
+3. `{PHONE}` و `{WHATSAPP}` را با شماره واقعی جایگزین کن
+4. راهنمای کامل: `blog/PUBLISH-GUIDE.md`
+
+### صفحات لندینگ
+1. هر فایل `pages/*.md` شامل frontmatter + محتوا
+2. در Blade یا CMS کپی کنید
 
 ## اولویت انتشار
 
